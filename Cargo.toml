@@ -7,6 +7,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+actix-web = "4.1.0"
+serde = "1.0.143"
+serde_derive = "1.0.143"
 failure = "0.1.8"
-serde = "1.0.144"
-serde_derive = "1.0.144"
+lazy_static = "1.4.0"

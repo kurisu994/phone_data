@@ -21,17 +21,34 @@
 3. 索引区 中每条记录的格式为"<手机号前七位><记录区的偏移><卡类型>"，每个索引的长度为9个字节；
 
 ## 安装使用
-`cargo run xxxxx(此处为要测试的手机号)` 
+`cargo run` 
 
 例如使用`17623552166`来测试:
 
 ```shell
-cargo run 17623552166
+curl --location --request GET 'http://127.0.0.1:9000/query/18086834111'
 
-find: PhoneNoInfo { province: "重庆", city: "重庆", zip_code: "400000", area_code: "023", card_type: "中国联通" }
+-----------------------------output------------------------------------------
+{
+    "code": 1,
+    "data": {
+        "province": "四川",
+        "city": "成都",
+        "zip_code": "610000",
+        "area_code": "028",
+        "card_type": "中国电信"
+    },
+    "success": true,
+    "result": "ok"
+}
+```
+
+## 测试
+
+```shell
+cargo test xxxx(手机号)
 ```
 
 ## 更新计划
-1. 优化代码，去掉警告
-2. 考虑改进算法，尝试更为高效的算法
-3. 改造项目使用`actix-web `来搭建后端服务支持http调用
+1. 考虑改进算法，尝试更为高效的算法
+2. 继续优化项目

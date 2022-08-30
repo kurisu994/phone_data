@@ -49,8 +49,8 @@ struct Records {
 }
 
 impl PhoneData {
-    pub fn new(data_file: &str) -> Fallible<PhoneData> {
-        let data_file = File::open(data_file)?;
+    pub fn new() -> Fallible<PhoneData> {
+        let data_file = File::open("phone.dat")?;
         let mut data_file = BufReader::new(data_file);
 
         // parse version and index offset
