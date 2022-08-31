@@ -23,7 +23,7 @@ if [ $? -eq 0 ]; then
 fi
 
 #启动容器
-docker run -u root -d --name phone-data -p 9001:8080 demo:latest
+docker run -u root -d --name phone-data -p 9001:8080 phone-data:latest
 
 #移除上一步的镜像
 docker images | grep pre/phone-data &> /dev/null
