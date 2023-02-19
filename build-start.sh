@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 git pull --rebase
 
 #检查存在的镜像并打包镜像
