@@ -2,10 +2,9 @@ use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web};
 use lazy_static::lazy_static;
 use serde::Serialize;
 use serde_derive::Serialize;
+use phone_data::PhoneData;
 
-use crate::lib::PhoneData;
 
-mod lib;
 
 struct AppState {
     pub phone_data: PhoneData,

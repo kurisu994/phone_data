@@ -166,6 +166,7 @@ enum CardType {
     CtccV = 4,
     CuccV = 5,
     CmccV = 6,
+    Cbn = 7,
 }
 
 impl CardType {
@@ -177,6 +178,7 @@ impl CardType {
             4 => Ok(CardType::CtccV),
             5 => Ok(CardType::CuccV),
             6 => Ok(CardType::CmccV),
+            7 => Ok(CardType::Cbn),
             _ => Err(ErrorKind::InvalidOpNo.into()),
         }
     }
@@ -189,6 +191,7 @@ impl CardType {
             CardType::CtccV => "中国电信虚拟运营商".to_string(),
             CardType::CuccV => "中国联通虚拟运营商".to_string(),
             CardType::CmccV => "中国移动虚拟运营商".to_string(),
+            CardType::Cbn => "中国广电".to_string(),
         }
     }
 }
