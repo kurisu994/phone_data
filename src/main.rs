@@ -1,10 +1,10 @@
 use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web};
 use lazy_static::lazy_static;
 use serde::Serialize;
-use serde_derive::Serialize;
 use serde_derive::Deserialize;
-use phone_data::PhoneData;
+use serde_derive::Serialize;
 
+use phone_data::PhoneData;
 
 struct AppState {
     pub phone_data: PhoneData,
@@ -37,7 +37,6 @@ impl<T: Serialize> Message<T> {
 }
 
 
-#[get("/")]
 async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
@@ -58,7 +57,6 @@ async fn query_phone(info: web::Query<IParams>) -> impl Responder {
     HttpResponse::Ok().json(msg)
 }
 
-#[get("/query2/{phone}")]
 async fn query_phone2(phone: web::Path<String>) -> impl Responder {
     let str = phone.into_inner();
     let msg = match STATE.phone_data.find(&str) {
@@ -73,7 +71,15 @@ async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
 
-async fn manual_hello() -> impl Responder {
+#[derive(Debug, Deserialize)]
+struct Pa {
+    province: String,
+}
+
+#[post("/hey")]
+async fn manual_hello(pa: web::Json<Pa>) -> impl Responder {
+    let _pa = pa.into_inner();
+    println!("province is : {}", _pa.province);
     HttpResponse::Ok().body("Hey there!")
 }
 
@@ -82,11 +88,11 @@ async fn manual_hello() -> impl Responder {
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .service(hello)
             .service(echo)
+            .service(manual_hello)
             .service(query_phone)
-            .service(query_phone2)
-            .route("/hey", web::get().to(manual_hello))
+            .route("/", web::get().to(hello))
+            .route("/query2/{phone}", web::get().to(query_phone2))
     }).workers(200)
         .bind(("0.0.0.0", 8080))?
         .run()
