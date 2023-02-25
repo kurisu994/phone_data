@@ -5,7 +5,7 @@ git pull --rebase
 docker images | grep phone-data &> /dev/null
 if [ $? -eq 0 ]
 then
-    docker tag phone-data:lastest pre/phone-data:pre
+    docker tag phone-data:latest pre/phone-data:pre
 fi
 
 docker build -t phone-data:latest -f ./Dockerfile --no-cache .
