@@ -29,7 +29,7 @@ struct Message<T>
 
 impl<T: Serialize> Message<T> {
     pub fn ok(data: T) -> Self {
-        Message { code: 1, result: "ok".to_owned(), data: Some(data), success: true }
+        Message { code: 0, result: "ok".to_owned(), data: Some(data), success: true }
     }
     pub fn err(message: &str) -> Self {
         Message { code: -1, result: message.to_owned(), data: None, success: false }
