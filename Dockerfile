@@ -1,6 +1,7 @@
-FROM rust:1.63 as builder
+FROM rust:1.68 as builder
 
-COPY ./config.toml /usr/local/cargo/config.toml
+# user github-action don't need this config
+# COPY ./config.toml /usr/local/cargo/config.toml
 WORKDIR /usr/local/src/
 COPY . ./
 
