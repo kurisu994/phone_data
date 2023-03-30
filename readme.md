@@ -1,9 +1,9 @@
 # 手机号归属地查询
 基于rust实现，使用二分查找法。
 
-- 归属地信息库文件大小：4,152,564 字节
+- 归属地信息库文件大小：4,484,792  字节
 - 归属地信息库最后更新：2023年02月
-- 手机号段记录条数：460232
+- 手机号段记录条数：497191
 
 ## phone.dat文件格式
 ```
@@ -66,7 +66,7 @@ curl 'http://127.0.0.1:9001/query?phone=18086834111'
 ## 测试
 
 ```shell
-cargo test xxxx(手机号)
+ cargo test --package phone_data --test demo_test phone_test -- --nocapture 
 ```
 
 ## 更新计划
