@@ -1,7 +1,5 @@
 FROM rust:1.68 as builder
 
-# user github-action don't need this config
-# COPY ./config.toml /usr/local/cargo/config.toml
 WORKDIR /usr/local/src/
 COPY . ./
 
