@@ -72,12 +72,12 @@ async fn echo(req_body: String) -> impl Responder {
 }
 
 #[derive(Debug, Deserialize)]
-struct Pa {
+struct DemoPa {
     province: String,
 }
 
 #[post("/hey")]
-async fn manual_hello(pa: web::Json<Pa>) -> impl Responder {
+async fn manual_hello(pa: web::Json<DemoPa>) -> impl Responder {
     let _pa = pa.into_inner();
     println!("province is : {}", _pa.province);
     HttpResponse::Ok().body("Hey there!")
