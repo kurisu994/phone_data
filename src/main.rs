@@ -1,4 +1,4 @@
-use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web};
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use lazy_static::lazy_static;
 use serde::Serialize;
 use serde_derive::Deserialize;
@@ -19,7 +19,8 @@ lazy_static! {
 
 #[derive(Debug, Serialize)]
 struct Message<T>
-    where T: Serialize
+where
+    T: Serialize,
 {
     code: i32,
     data: Option<T>,
