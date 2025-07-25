@@ -1,21 +1,18 @@
 use std::fs::File;
-use std::io::{
-    BufReader,
-    Read,
-};
+use std::io::{BufReader, Read};
 
-use failure::{Fail, Fallible};
 use serde_derive::Serialize;
+use thiserror::Error;
 
-#[derive(Fail, Debug)]
+#[derive(Error, Debug)]
 pub enum ErrorKind {
-    #[fail(display = "invalid phone database.")]
+    #[error("invalid phone database.")]
     InvalidPhoneDatabase,
-    #[fail(display = "length of phone number is invalid.")]
+    #[error("length of phone number is invalid.")]
     InvalidLength,
-    #[fail(display = "can not find this phone number in database.")]
+    #[error("can not find this phone number in database.")]
     NotFound,
-    #[fail(display = "invalid number to representative Communications Operators.")]
+    #[error("invalid number to representative Communications Operators.")]
     InvalidOpNo,
 }
 
@@ -50,18 +47,23 @@ struct Records {
 
 impl PhoneData {
     pub fn new() -> Fallible<PhoneData> {
-        let data_file = File::open("phone.dat")?;
+        let data_file = File::open("phone.dat").map_err(|_| ErrorKind::InvalidPhoneDatabase)?;
         let mut data_file = BufReader::new(data_file);
 
         // parse version and index offset
         let mut header_buffer = [0u8; 8];
-        data_file.read_exact(&mut header_buffer)?;
-        let version = String::from_utf8((&header_buffer[..4]).to_vec())?;
+        data_file
+            .read_exact(&mut header_buffer)
+            .map_err(|_| ErrorKind::InvalidPhoneDatabase)?;
+        let version = String::from_utf8((&header_buffer[..4]).to_vec())
+            .map_err(|_| ErrorKind::InvalidPhoneDatabase)?;
         let index_offset = Self::four_u8_to_i32(&header_buffer[4..]) as u64;
 
         // read records
         let mut records = vec![0u8; index_offset as usize - 8];
-        data_file.read_exact(&mut records)?;
+        data_file
+            .read_exact(&mut records)
+            .map_err(|_| ErrorKind::InvalidPhoneDatabase)?;
 
         // parse index
         let mut index = Vec::new();
@@ -104,10 +106,11 @@ impl PhoneData {
 
     fn parse_to_record(&self, offset: usize) -> Fallible<Records> {
         if let Some(record) = self.records[offset - 8..].splitn(2, |i| *i == 0u8).nth(0) {
-            let record = String::from_utf8(record.to_vec())?;
+            let record =
+                String::from_utf8(record.to_vec()).map_err(|_| ErrorKind::InvalidPhoneDatabase)?;
             let record: Vec<&str> = record.split('|').collect();
             if record.len() != 4 {
-                return Err(ErrorKind::InvalidPhoneDatabase.into());
+                return Err(ErrorKind::InvalidPhoneDatabase);
             }
             Ok(Records {
                 province: record[0].to_string(),
@@ -116,7 +119,7 @@ impl PhoneData {
                 area_code: record[3].to_string(),
             })
         } else {
-            Err(ErrorKind::InvalidPhoneDatabase.into())
+            Err(ErrorKind::InvalidPhoneDatabase)
         }
     }
 
@@ -124,9 +127,11 @@ impl PhoneData {
     pub fn find(&self, no: &str) -> Fallible<PhoneNoInfo> {
         let len = no.len();
         if len < 7 || len > 11 {
-            return Err(ErrorKind::InvalidLength.into());
+            return Err(ErrorKind::InvalidLength);
         }
-        let no: i32 = no[..7].parse()?;
+        let no: i32 = no[..7]
+            .parse()
+            .map_err(|_| ErrorKind::InvalidPhoneDatabase)?;
 
         let mut left = 0;
         let mut mid = 0;
@@ -134,7 +139,7 @@ impl PhoneData {
         loop {
             let new_mid = (left + right) / 2;
             if new_mid == mid {
-                break Err(ErrorKind::NotFound.into());
+                break Err(ErrorKind::NotFound);
             }
             mid = new_mid;
             let mid_index = &self.index[mid];
@@ -171,7 +176,7 @@ enum CardType {
 }
 
 impl CardType {
-    fn from_u8(i: u8) -> Fallible<CardType> {
+    fn from_u8(i: u8) -> Result<CardType, ErrorKind> {
         match i {
             1 => Ok(CardType::Cmcc),
             2 => Ok(CardType::Cucc),
@@ -181,7 +186,7 @@ impl CardType {
             6 => Ok(CardType::CmccV),
             7 => Ok(CardType::Cbcc),
             8 => Ok(CardType::CbccV),
-            _ => Err(ErrorKind::InvalidOpNo.into()),
+            _ => Err(ErrorKind::InvalidOpNo),
         }
     }
 
@@ -212,3 +217,5 @@ pub struct PhoneNoInfo {
     /// 卡类型
     card_type: String,
 }
+
+type Fallible<T> = Result<T, ErrorKind>;
