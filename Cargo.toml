@@ -3,12 +3,32 @@ name = "phone_data"
 version = "0.1.0"
 authors = ["Kurisu <lucifer994@gmail.com>"]
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "High-performance phone number lookup service with optimized binary search"
+keywords = ["phone", "api", "lookup", "actix-web"]
+categories = ["web-programming"]
+license = "MIT"
 
 [dependencies]
-actix-web = "^4.3.0"
-serde = "^1.0.152"
-serde_derive = "^1.0.152"
-thiserror = "1"
-lazy_static = "^1.4.0"
+actix-web = "4.11.0"
+serde = { version = "1.0.219", features = ["derive"] }
+thiserror = "1.0.69"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
+num_cpus = "1.16.0"
+tokio = { version = "1.46.1", features = ["full"] }
+config = "0.14"
+toml = "0.8"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 1
+debug = true
+
+[profile.test]
+opt-level = 2
