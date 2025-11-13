@@ -4,20 +4,29 @@ use std::io::{
     Read,
 };
 
-use failure::{Fail, Fallible};
+use anyhow::Result;
 use serde_derive::Serialize;
 
-#[derive(Fail, Debug)]
+#[derive(Debug)]
 pub enum ErrorKind {
-    #[fail(display = "invalid phone database.")]
     InvalidPhoneDatabase,
-    #[fail(display = "length of phone number is invalid.")]
     InvalidLength,
-    #[fail(display = "can not find this phone number in database.")]
     NotFound,
-    #[fail(display = "invalid number to representative Communications Operators.")]
     InvalidOpNo,
 }
+
+impl std::fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ErrorKind::InvalidPhoneDatabase => write!(f, "invalid phone database."),
+            ErrorKind::InvalidLength => write!(f, "length of phone number is invalid."),
+            ErrorKind::NotFound => write!(f, "can not find this phone number in database."),
+            ErrorKind::InvalidOpNo => write!(f, "invalid number to representative Communications Operators."),
+        }
+    }
+}
+
+impl std::error::Error for ErrorKind {}
 
 #[derive(Debug, Serialize)]
 pub struct PhoneData {
@@ -49,7 +58,7 @@ struct Records {
 }
 
 impl PhoneData {
-    pub fn new() -> Fallible<PhoneData> {
+    pub fn new() -> Result<PhoneData> {
         let data_file = File::open("phone.dat")?;
         let mut data_file = BufReader::new(data_file);
 
@@ -102,7 +111,7 @@ impl PhoneData {
         ret
     }
 
-    fn parse_to_record(&self, offset: usize) -> Fallible<Records> {
+    fn parse_to_record(&self, offset: usize) -> Result<Records> {
         if let Some(record) = self.records[offset - 8..].splitn(2, |i| *i == 0u8).nth(0) {
             let record = String::from_utf8(record.to_vec())?;
             let record: Vec<&str> = record.split('|').collect();
@@ -121,7 +130,7 @@ impl PhoneData {
     }
 
     /// 二分法查找 `phone_no` 数据
-    pub fn find(&self, no: &str) -> Fallible<PhoneNoInfo> {
+    pub fn find(&self, no: &str) -> Result<PhoneNoInfo> {
         let len = no.len();
         if len < 7 || len > 11 {
             return Err(ErrorKind::InvalidLength.into());
@@ -171,7 +180,7 @@ enum CardType {
 }
 
 impl CardType {
-    fn from_u8(i: u8) -> Fallible<CardType> {
+    fn from_u8(i: u8) -> Result<CardType> {
         match i {
             1 => Ok(CardType::Cmcc),
             2 => Ok(CardType::Cucc),

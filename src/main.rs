@@ -1,8 +1,6 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use lazy_static::lazy_static;
-use serde::Serialize;
-use serde_derive::Deserialize;
-use serde_derive::Serialize;
+use serde::{Serialize, Deserialize};
 
 use phone_data::PhoneData;
 
