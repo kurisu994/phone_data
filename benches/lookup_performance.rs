@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use phone_data::PhoneData;
+use phone_data::{PhoneData, PhoneLookup};
 use std::time::Duration;
 
 fn load_phone_data() -> PhoneData {
