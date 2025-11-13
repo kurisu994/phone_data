@@ -112,58 +112,90 @@ impl PhoneData {
     }
 
     fn parse_to_record(&self, offset: usize) -> Result<Records> {
-        if let Some(record) = self.records[offset - 8..].splitn(2, |i| *i == 0u8).nth(0) {
-            let record = String::from_utf8(record.to_vec())?;
-            let record: Vec<&str> = record.split('|').collect();
-            if record.len() != 4 {
-                return Err(ErrorKind::InvalidPhoneDatabase.into());
-            }
-            Ok(Records {
-                province: record[0].to_string(),
-                city: record[1].to_string(),
-                zip_code: record[2].to_string(),
-                area_code: record[3].to_string(),
-            })
-        } else {
-            Err(ErrorKind::InvalidPhoneDatabase.into())
+        // 优化：避免额外的内存分配
+        let record_end = match self.records[offset - 8..].iter().position(|&b| b == 0) {
+            Some(pos) => offset - 8 + pos,
+            None => return Err(ErrorKind::InvalidPhoneDatabase.into()),
+        };
+
+        let record_slice = &self.records[offset - 8..record_end];
+        let record_str = std::str::from_utf8(record_slice)
+            .map_err(|_| ErrorKind::InvalidPhoneDatabase)?;
+
+        // 优化：预分配正确大小的Vec以避免重新分配
+        let mut parts = Vec::with_capacity(4);
+        for part in record_str.split('|') {
+            parts.push(part);
         }
+
+        if parts.len() != 4 {
+            return Err(ErrorKind::InvalidPhoneDatabase.into());
+        }
+
+        Ok(Records {
+            province: parts[0].to_string(),
+            city: parts[1].to_string(),
+            zip_code: parts[2].to_string(),
+            area_code: parts[3].to_string(),
+        })
     }
 
-    /// 二分法查找 `phone_no` 数据
+    /// 二分法查找 `phone_no` 数据 - 优化版本
     pub fn find(&self, no: &str) -> Result<PhoneNoInfo> {
         let len = no.len();
         if len < 7 || len > 11 {
             return Err(ErrorKind::InvalidLength.into());
         }
-        let no: i32 = no[..7].parse()?;
 
-        let mut left = 0;
-        let mut mid = 0;
+        // 优化：只解析前7位并提前转换为i32
+        let phone_prefix = if len == 7 {
+            no.parse::<i32>()?
+        } else {
+            no[..7].parse::<i32>()?
+        };
+
+        let mut left = 0usize;
         let mut right = self.index.len();
-        loop {
-            let new_mid = (left + right) / 2;
-            if new_mid == mid {
-                break Err(ErrorKind::NotFound.into());
-            }
-            mid = new_mid;
-            let mid_index = &self.index[mid];
-            let cur_phone = mid_index.phone_no_prefix;
-            if cur_phone > no {
-                right = mid;
-            } else if cur_phone < no {
-                left = mid;
-            } else {
-                let record = self.parse_to_record(mid_index.records_offset as usize)?;
-                let card_type = CardType::from_u8(mid_index.card_type)?;
-                break Ok(PhoneNoInfo {
-                    province: record.province,
-                    city: record.city,
-                    zip_code: record.zip_code,
-                    area_code: record.area_code,
-                    card_type: card_type.get_description(),
-                });
+
+        // 优化的二分查找：使用while循环避免不必要的中间变量
+        while left < right {
+            // 防止溢出并使用位运算优化
+            let mid = left + ((right - left) >> 1);
+            let mid_index = unsafe {
+                // unsafe访问提升性能，因为mid保证在有效范围内
+                self.index.get_unchecked(mid)
+            };
+
+            match mid_index.phone_no_prefix.cmp(&phone_prefix) {
+                std::cmp::Ordering::Greater => {
+                    right = mid;
+                }
+                std::cmp::Ordering::Less => {
+                    left = mid + 1;
+                }
+                std::cmp::Ordering::Equal => {
+                    // 找到匹配项，解析记录并返回
+                    return self.build_phone_info(mid_index);
+                }
             }
         }
+
+        Err(ErrorKind::NotFound.into())
+    }
+
+    /// 辅助函数：构建PhoneNoInfo，减少重复代码
+    #[inline]
+    fn build_phone_info(&self, index: &Index) -> Result<PhoneNoInfo> {
+        let record = self.parse_to_record(index.records_offset as usize)?;
+        let card_type = CardType::from_u8(index.card_type)?;
+
+        Ok(PhoneNoInfo {
+            province: record.province,
+            city: record.city,
+            zip_code: record.zip_code,
+            area_code: record.area_code,
+            card_type: card_type.get_description(),
+        })
     }
 }
 
