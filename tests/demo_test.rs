@@ -3,7 +3,7 @@ include!("../src/lib.rs");
 #[test]
 fn phone_test() {
     let phone_data = PhoneData::new().unwrap();
-    let phone = "1920000000";
+    let phone = "18086834111";
     let result = phone_data.find(&phone);
     let mut res = false;
     if let Ok(data) = result {
