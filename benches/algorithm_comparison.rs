@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use phone_data::{PhoneData, PhoneLookup};
+use phone_data::{PhoneData};
 use phone_data::phone_hash::PhoneDataHash;
 use phone_data::phone_simd::PhoneDataSimd;
 use phone_data::phone_bloom::PhoneDataBloom;
