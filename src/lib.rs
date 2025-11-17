@@ -12,5 +12,10 @@ pub mod phone_bloom;
 // 重新导出公共类型
 pub use common::{PhoneNoInfo, ErrorKind, CardType, PhoneLookup, PhoneStats};
 
-// 重新导出二分查找算法作为默认实现
-pub use binary_search::PhoneData;
+// 重新导出SIMD优化算法作为默认实现
+pub use phone_simd::PhoneDataSimd as PhoneData;
+
+// 便于从crate根导出其它实现类型
+pub use phone_hash::PhoneDataHash;
+pub use phone_bloom::PhoneDataBloom;
+pub use phone_simd::PhoneDataSimd;

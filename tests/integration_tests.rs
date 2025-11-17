@@ -78,11 +78,11 @@ mod integration_tests {
             assert!(bloom_result.is_err(), "Bloom lookup should fail for {}", phone);
 
             // 验证错误类型一致
-            assert!(matches!(binary_result.err().unwrap().downcast_ref::<ErrorKind>(), &ErrorKind::NotFound));
-            assert!(matches!(hash_result.err().unwrap().downcast_ref::<ErrorKind>(), &ErrorKind::NotFound));
-            assert!(matches!(simd_result.err().unwrap().downcast_ref::<ErrorKind>(), &ErrorKind::NotFound));
+            assert!(matches!(binary_result.err().unwrap().downcast_ref::<ErrorKind>(), Some(&ErrorKind::NotFound)));
+            assert!(matches!(hash_result.err().unwrap().downcast_ref::<ErrorKind>(), Some(&ErrorKind::NotFound)));
+            assert!(matches!(simd_result.err().unwrap().downcast_ref::<ErrorKind>(), Some(&ErrorKind::NotFound)));
             // 布隆过滤器可能提前过滤，但也应该返回NotFound
-            assert!(matches!(bloom_result.err().unwrap().downcast_ref::<ErrorKind>(), &ErrorKind::NotFound));
+            assert!(matches!(bloom_result.err().unwrap().downcast_ref::<ErrorKind>(), Some(&ErrorKind::NotFound)));
         }
     }
 
