@@ -159,11 +159,7 @@ impl PhoneDataSimd {
 
             // 预取下一个可能的访问位置
             if mid + 16 < self.index.len() {
-                unsafe {
-                    // 使用std::intrinsics::prefetch_read_data如果可用
-                    // 这里简化为注释，实际实现需要特性标志
-                    // std::intrinsics::prefetch_read_data(self.index.as_ptr().add(mid + 16) as *const _);
-                }
+                self.prefetch_index(mid + 16);
             }
 
             let mid_index = unsafe { self.index.get_unchecked(mid) };
@@ -176,6 +172,29 @@ impl PhoneDataSimd {
         }
 
         None
+    }
+
+    #[inline]
+    fn prefetch_index(&self, _idx: usize) {
+        #[cfg(target_arch = "x86_64")]
+        unsafe {
+            core::arch::x86_64::_mm_prefetch(
+                self.index.as_ptr().add(_idx) as *const i8,
+                core::arch::x86_64::_MM_HINT_T0,
+            );
+        }
+        #[cfg(target_arch = "x86")]
+        unsafe {
+            core::arch::x86::_mm_prefetch(
+                self.index.as_ptr().add(_idx) as *const i8,
+                core::arch::x86::_MM_HINT_T0,
+            );
+        }
+        #[cfg(target_arch = "aarch64")]
+        unsafe {
+            let ptr = self.index.as_ptr().add(_idx);
+            core::arch::asm!("prfm pldl1keep, [{addr}]", addr = in(reg) ptr, options(nostack, preserves_flags));
+        }
     }
 
     /// 批量查找优化 - 一次调用查找多个号码
