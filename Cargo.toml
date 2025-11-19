@@ -16,6 +16,13 @@ lazy_static = "^1.5.0"
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 
+[profile.release]
+opt-level = 'z'     # 优化二进制文件大小
+lto = true          # 启用链接时优化
+codegen-units = 1   # 减少并行代码生成单元以提高优化效果
+panic = 'abort'     # 直接中止而不是展开，减小二进制大小
+strip = true        # 自动剥离符号
+
 [[bench]]
 name = "lookup_performance"
 harness = false

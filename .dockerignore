@@ -1,0 +1,27 @@
+# 排除大文件和不必要的构建产物以减小 Docker 构建上下文
+target/
+.git/
+.gitignore
+.idea/
+*.md
+README.md
+CLAUDE.md
+LICENSE
+Dockerfile
+.dockerignore
+
+# 排除测试和 benchmark 文件（只在开发时需要）
+tests/
+benches/
+data/
+
+# 排除构建缓存
+.cargo/
+Cargo.lock
+
+# 排除临时文件
+*.tmp
+*.log
+*.swp
+*~
+
