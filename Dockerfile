@@ -26,4 +26,6 @@ COPY --from=builder /usr/local/src/target/release/phone_data /usr/local/bin/phon
 COPY --from=builder /usr/local/src/phone.dat /usr/local/bin/phone.dat
 WORKDIR /usr/local/bin
 USER 65532
+
+EXPOSE 8080
 CMD ["./phone_data"]
