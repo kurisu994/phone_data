@@ -113,6 +113,42 @@ pub struct PhoneNoInfo {
 }
 ```
 
+## 高级架构设计
+
+### 多算法架构
+项目实现了四种不同的查找算法，通过统一的`PhoneLookup`和`PhoneStats` traits提供一致接口：
+- **二分查找** (`lib.rs`): O(log n)时间，O(1)空间，内存受限环境首选
+- **哈希查找** (`phone_hash.rs`): O(1)平均时间，O(n)空间，极致性能首选
+- **SIMD优化** (`phone_simd.rs`): 向量化指令，批量查询优化，跨平台支持
+- **布隆过滤器** (`phone_bloom.rs`): 两阶段查找，失败查询优化，1%误报率
+
+### 统一接口设计
+所有算法实现都遵循相同的trait接口：
+```rust
+pub trait PhoneLookup {
+    fn find(&self, no: &str) -> Result<PhoneNoInfo>;
+    fn find_batch(&self, phones: &[&str]) -> Vec<Result<PhoneNoInfo>>;
+    fn validate_phone_no(&self, no: &str) -> Result<i32>;
+}
+
+pub trait PhoneStats {
+    fn total_entries(&self) -> usize;
+    fn version(&self) -> &str;
+    fn memory_usage_bytes(&self) -> usize;
+}
+```
+
+### 性能基准测试架构
+项目包含完整的Criterion基准测试套件 (`benches/`):
+- **算法对比测试**: 单次查询、批量查询、初始化时间对比
+- **性能分析**: 不同内存访问模式下的表现
+- **跨平台测试**: 支持x86_64、aarch64等多架构
+
+### Docker多架构部署
+- **多阶段构建**: builder + runtime优化镜像大小
+- **多架构支持**: linux/amd64、linux/arm64、linux/arm/v7
+- **CI/CD流程**: GitHub Actions自动化构建和发布
+
 ## 开发注意事项
 
 - phone.dat文件必须存在于项目根目录
@@ -120,3 +156,5 @@ pub struct PhoneNoInfo {
 - 数据文件更新时间：2025年02月，包含517258条手机号段记录
 - 支持的手机号码长度：7-11位
 - 查询基于手机号前七位进行匹配
+- 项目使用Rust 2024 edition，需要Rust 1.85+
+- 默认导出SIMD优化算法作为主要实现
