@@ -1,6 +1,6 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use lazy_static::lazy_static;
-use serde::{Serialize, Deserialize};
+use serde_derive::{Serialize, Deserialize};
 
 use phone_data::{PhoneData};
 
@@ -18,7 +18,7 @@ lazy_static! {
 #[derive(Debug, Serialize)]
 struct Message<T>
 where
-    T: Serialize,
+    T: serde::Serialize,
 {
     code: i32,
     data: Option<T>,
@@ -26,7 +26,7 @@ where
     result: String,
 }
 
-impl<T: Serialize> Message<T> {
+impl<T: serde::Serialize> Message<T> {
     pub fn ok(data: T) -> Self {
         Message { code: 0, result: "ok".to_owned(), data: Some(data), success: true }
     }

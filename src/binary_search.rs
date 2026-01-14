@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use anyhow::Result;
 use serde_derive::Serialize;
-use crate::common::{utils, Index, ParsedRecord, PhoneNoInfo, PhoneLookup, PhoneStats, ErrorKind};
+use crate::common::{utils, Index, PhoneNoInfo, PhoneLookup, PhoneStats, ErrorKind};
 
 
 
@@ -59,17 +59,11 @@ impl PhoneData {
         Ok(config)
     }
 
-  
-    fn parse_to_record(&self, offset: usize) -> Result<ParsedRecord> {
-        crate::common::utils::parse_record_data(&self.records, offset)
-    }
-
-    
     /// 辅助函数：构建PhoneNoInfo，减少重复代码
     #[inline]
     fn build_phone_info(&self, index: &Index) -> Result<PhoneNoInfo> {
-        let record = self.parse_to_record(index.records_offset as usize)?;
-        crate::common::utils::build_phone_info(&record, index.card_type)
+        let record = utils::parse_record_data(&self.records, index.records_offset as usize)?;
+        utils::build_phone_info(&record, index.card_type)
     }
 }
 

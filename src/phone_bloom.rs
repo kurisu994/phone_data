@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use anyhow::Result;
 use serde_derive::Serialize;
-use crate::common::{PhoneNoInfo, ErrorKind, CardType, PhoneLookup, PhoneStats};
+use crate::common::{utils, PhoneNoInfo, ErrorKind, CardType, PhoneLookup, PhoneStats};
 
 #[derive(Debug, Serialize)]
 pub struct PhoneDataBloom {
@@ -92,7 +92,7 @@ impl PhoneDataBloom {
         let mut header_buffer = [0u8; 8];
         data_file.read_exact(&mut header_buffer)?;
         let version = String::from_utf8((&header_buffer[..4]).to_vec())?;
-        let index_offset = Self::four_u8_to_i32(&header_buffer[4..]) as u64;
+        let index_offset = utils::four_u8_to_i32(&header_buffer[4..]) as u64;
 
         // 读取记录区
         let mut records = vec![0u8; index_offset as usize - 8];
@@ -112,8 +112,8 @@ impl PhoneDataBloom {
                 },
             }
 
-            let phone_no_prefix = Self::four_u8_to_i32(&index_item[..4]);
-            let records_offset = Self::four_u8_to_i32(&index_item[4..8]);
+            let phone_no_prefix = utils::four_u8_to_i32(&index_item[..4]);
+            let records_offset = utils::four_u8_to_i32(&index_item[4..8]);
             let card_type = index_item[8];
 
             // 添加到布隆过滤器
@@ -157,7 +157,7 @@ impl PhoneDataBloom {
 
         match result {
             Some(index) => {
-                let record = self.parse_to_record(index.records_offset as usize)?;
+                let record = utils::parse_record_data(&self.records, index.records_offset as usize)?;
                 let card_type = CardType::from_u8(index.card_type)?;
                 Ok(PhoneNoInfo {
                     province: record.province,
@@ -193,7 +193,7 @@ impl PhoneDataBloom {
             // 精确查找
             match self.binary_search(phone_prefix) {
                 Some(index) => {
-                    let record = self.parse_to_record(index.records_offset as usize)?;
+                    let record = utils::parse_record_data(&self.records, index.records_offset as usize)?;
                     let card_type = CardType::from_u8(index.card_type)?;
                     Ok(PhoneNoInfo {
                         province: record.province,
@@ -246,7 +246,7 @@ impl PhoneDataBloom {
         let binary_start = std::time::Instant::now();
         let result = match self.binary_search(phone_prefix) {
             Some(index) => {
-                let record = self.parse_to_record(index.records_offset as usize).unwrap();
+                let record = utils::parse_record_data(&self.records, index.records_offset as usize).unwrap();
                 let card_type = CardType::from_u8(index.card_type).unwrap();
                 Ok(PhoneNoInfo {
                     province: record.province,
@@ -301,48 +301,6 @@ impl PhoneDataBloom {
                 self.bloom_filter.bits.len() * std::mem::size_of::<u64>(),
         }
     }
-
-    fn four_u8_to_i32(s: &[u8]) -> i32 {
-        if s.len() < 4 {
-            return 0;
-        }
-        i32::from_le_bytes([s[0], s[1], s[2], s[3]])
-    }
-
-    fn parse_to_record(&self, offset: usize) -> Result<ParsedRecord> {
-        let record_end = match self.records[offset - 8..].iter().position(|&b| b == 0) {
-            Some(pos) => offset - 8 + pos,
-            None => return Err(ErrorKind::InvalidPhoneDatabase.into()),
-        };
-
-        let record_slice = &self.records[offset - 8..record_end];
-        let record_str = std::str::from_utf8(record_slice)
-            .map_err(|_| ErrorKind::InvalidPhoneDatabase)?;
-
-        let mut parts = Vec::with_capacity(4);
-        for part in record_str.split('|') {
-            parts.push(part);
-        }
-
-        if parts.len() != 4 {
-            return Err(ErrorKind::InvalidPhoneDatabase.into());
-        }
-
-        Ok(ParsedRecord {
-            province: parts[0].to_string(),
-            city: parts[1].to_string(),
-            zip_code: parts[2].to_string(),
-            area_code: parts[3].to_string(),
-        })
-    }
-}
-
-#[derive(Debug)]
-struct ParsedRecord {
-    province: String,
-    city: String,
-    zip_code: String,
-    area_code: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -387,7 +345,7 @@ impl PhoneLookup for PhoneDataBloom {
 
         match result {
             Some(index) => {
-                let record = self.parse_to_record(index.records_offset as usize)?;
+                let record = utils::parse_record_data(&self.records, index.records_offset as usize)?;
                 let card_type = CardType::from_u8(index.card_type)?;
                 Ok(PhoneNoInfo {
                     province: record.province,

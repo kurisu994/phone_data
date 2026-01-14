@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use anyhow::Result;
 use serde_derive::Serialize;
-use crate::common::{PhoneNoInfo, ErrorKind, CardType, PhoneLookup, PhoneStats};
+use crate::common::{utils, PhoneNoInfo, ErrorKind, CardType, PhoneLookup, PhoneStats};
 
 #[derive(Debug, Serialize)]
 pub struct PhoneDataHash {
@@ -33,7 +33,7 @@ impl PhoneDataHash {
         let mut header_buffer = [0u8; 8];
         data_file.read_exact(&mut header_buffer)?;
         let version = String::from_utf8((&header_buffer[..4]).to_vec())?;
-        let index_offset = Self::four_u8_to_i32(&header_buffer[4..]) as u64;
+        let index_offset = utils::four_u8_to_i32(&header_buffer[4..]) as u64;
 
         // 读取记录区
         let mut records = vec![0u8; index_offset as usize - 8];
@@ -52,12 +52,12 @@ impl PhoneDataHash {
                 },
             }
 
-            let phone_no_prefix = Self::four_u8_to_i32(&index_item[..4]);
-            let records_offset = Self::four_u8_to_i32(&index_item[4..]);
+            let phone_no_prefix = utils::four_u8_to_i32(&index_item[..4]);
+            let records_offset = utils::four_u8_to_i32(&index_item[4..]);
             let card_type = index_item[8];
 
             // 解析记录
-            let record = Self::parse_to_record(&records, records_offset as usize)?;
+            let record = utils::parse_record_data(&records, records_offset as usize)?;
 
             // 插入到哈希表
             phone_map.insert(phone_no_prefix, PhoneRecord {
@@ -112,50 +112,6 @@ impl PhoneDataHash {
             version: self.version.clone(),
         }
     }
-
-    fn four_u8_to_i32(s: &[u8]) -> i32 {
-        if s.len() < 4 {
-            return 0;
-        }
-        i32::from_le_bytes([s[0], s[1], s[2], s[3]])
-    }
-
-    fn parse_to_record(records: &[u8], offset: usize) -> Result<ParsedRecord> {
-        // 找到记录结束位置（遇到0字节）
-        let record_end = match records[offset - 8..].iter().position(|&b| b == 0) {
-            Some(pos) => offset - 8 + pos,
-            None => return Err(ErrorKind::InvalidPhoneDatabase.into()),
-        };
-
-        let record_slice = &records[offset - 8..record_end];
-        let record_str = std::str::from_utf8(record_slice)
-            .map_err(|_| ErrorKind::InvalidPhoneDatabase)?;
-
-        // 解析记录字段
-        let mut parts = Vec::with_capacity(4);
-        for part in record_str.split('|') {
-            parts.push(part);
-        }
-
-        if parts.len() != 4 {
-            return Err(ErrorKind::InvalidPhoneDatabase.into());
-        }
-
-        Ok(ParsedRecord {
-            province: parts[0].to_string(),
-            city: parts[1].to_string(),
-            zip_code: parts[2].to_string(),
-            area_code: parts[3].to_string(),
-        })
-    }
-}
-
-#[derive(Debug)]
-struct ParsedRecord {
-    province: String,
-    city: String,
-    zip_code: String,
-    area_code: String,
 }
 
 #[derive(Debug, Serialize)]
