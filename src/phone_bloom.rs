@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use anyhow::Result;
 use serde_derive::Serialize;
-use crate::common::{utils, PhoneNoInfo, ErrorKind, CardType, PhoneLookup, PhoneStats};
+use crate::common::{utils, PhoneNoInfo, ErrorKind, CardType, PhoneLookup, PhoneStats, Index};
 
 #[derive(Debug, Serialize)]
 pub struct PhoneDataBloom {
@@ -10,13 +10,6 @@ pub struct PhoneDataBloom {
     records: Vec<u8>,
     index: Vec<Index>,
     bloom_filter: BloomFilter,
-}
-
-#[derive(Debug, Serialize)]
-struct Index {
-    phone_no_prefix: i32,
-    records_offset: i32,
-    card_type: u8,
 }
 
 #[derive(Debug, Serialize)]
