@@ -2,9 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 项目记忆（memory-bank）
+
+开工先读 [`memory-bank/00-project.md`](memory-bank/00-project.md)，协作约定与索引见
+[`memory-bank/README.md`](memory-bank/README.md)。分领域规范按代码路径自动注入，
+四层结构（共识层 / `active/` / `journal/` / `archive/`）与写入门槛见该 README，
+**没有有效增量时不修改任何记忆文件**。
+
+注意：本文档与 `README.md` 中若干描述已与代码不符（例如二分查找的实际位置、默认实现、
+性能数字），`memory-bank/00-project.md` 的「已知文档与代码的偏差」一节列了差异，以代码为准。
+
 ## 项目概述
 
-这是一个基于Rust 2024 edition实现的手机号归属地查询服务，使用二分查找算法在phone.dat数据文件中快速查找手机号信息。
+这是一个基于Rust 2024 edition实现的手机号归属地查询服务，使用多种查找算法（默认 SIMD 优化实现）在phone.dat数据文件中快速查找手机号信息。
 
 ### 技术栈
 - **Rust Edition**: 2024 (需要Rust 1.85+)
@@ -17,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 手机号归属地查询（省份、城市、邮编、长途区号）
 - 运营商类型识别（移动、联通、电信、广电及其虚拟运营商）
 - HTTP API服务，支持GET和POST请求
-- 高性能二分查找算法
+- 四种查找算法可选（二分、哈希、SIMD、布隆过滤器）
 
 ### 数据文件格式
 
@@ -172,7 +182,7 @@ pub struct PhoneNoInfo {
 
 ### 多算法架构
 项目实现了四种不同的查找算法，通过统一的`PhoneLookup`和`PhoneStats` traits提供一致接口：
-- **二分查找** (`lib.rs`): O(log n)时间，O(1)空间，内存受限环境首选
+- **二分查找** (`src/binary_search.rs`): O(log n)时间，O(1)空间，内存受限环境首选
 - **哈希查找** (`phone_hash.rs`): O(1)平均时间，O(n)空间，极致性能首选
 - **SIMD优化** (`phone_simd.rs`): 向量化指令，批量查询优化，跨平台支持
 - **布隆过滤器** (`phone_bloom.rs`): 两阶段查找，失败查询优化，1%误报率
