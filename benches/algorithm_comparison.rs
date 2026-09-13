@@ -1,13 +1,15 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use phone_data::{PhoneData};
+use phone_data::PhoneLookup;
+// 注意：phone_data::PhoneData 是 SIMD 实现的别名，真正的二分查找在 binary_search 模块
+use phone_data::binary_search::PhoneData as BinaryPhoneData;
 use phone_data::phone_hash::PhoneDataHash;
 use phone_data::phone_simd::PhoneDataSimd;
 use phone_data::phone_bloom::PhoneDataBloom;
 use std::time::Duration;
 
 // 加载二分法版本数据
-fn load_binary_search_data() -> PhoneData {
-    PhoneData::new().expect("Failed to load binary search phone data")
+fn load_binary_search_data() -> BinaryPhoneData {
+    BinaryPhoneData::new().expect("Failed to load binary search phone data")
 }
 
 // 加载哈希法版本数据
@@ -152,10 +154,10 @@ fn bench_initialization_time(c: &mut Criterion) {
     let mut group = c.benchmark_group("initialization_time");
     group.measurement_time(Duration::from_secs(5));
 
-    // 测试二分法数据初始化时间
+    // 测试二分法数据初始化时间（注意用的是真正的二分实现，不是 SIMD 别名）
     group.bench_function("binary_search_init", |b| {
         b.iter(|| {
-            black_box(PhoneData::new().ok());
+            black_box(BinaryPhoneData::new().ok());
         })
     });
 
