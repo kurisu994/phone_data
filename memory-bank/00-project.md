@@ -53,11 +53,13 @@ Rust 编写的手机号归属地查询服务：读取 `phone.dat` 二进制库�
 
 ### 已修正（见 `b952330`、`07e0708`，不要改回去）
 
-- 「二分查找在 `src/lib.rs`」→ `src/binary_search.rs`（`README.md` 与 `CLAUDE.md`）
+- 「二分查找在 `src/lib.rs`」→ `src/binary_search.rs`（`README.md` 与当时的 `CLAUDE.md`）
 - 「二分查找是默认实现」→ 「默认 SIMD 优化实现」
 - `benches/algorithm_comparison.rs` 的二分项 → 真正的 `binary_search::PhoneData`
+- `CLAUDE.md` 已整体删除（见 `e4b56f8`），协作指引改由 `AGENTS.md` + `memory-bank/` 承载；
+  排查时不必再找 `CLAUDE.md`，`.dockerignore` 里的残留条目也已清掉
 
-`CLAUDE.md` 顶部那段「本文档与 README.md 中若干描述已与代码不符」在性能数字清理完之前
+`AGENTS.md` 末尾那段「本文档与 README.md 中若干描述已与代码不符」在性能数字清理完之前
 仍然成立，不是过期描述。
 
 ## 常用命令
